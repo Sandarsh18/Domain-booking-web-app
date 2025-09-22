@@ -950,38 +950,73 @@ graph TB
 ### 🔄 Git Development Workflow
 
 ```mermaid
-gitgraph
-    commit id: "🚀 Initial Commit"
-    commit id: "📝 Basic Auth System"
+graph TB
+    subgraph "🚀 Main Branch"
+        A[Initial Commit] --> B[Basic Auth System]
+        B --> C[Merge Auth Improvements]
+        C --> D[🎉 Release v1.1]
+        D --> E[Merge Payment Integration]
+        E --> F[🎉 Release v1.2] 
+        F --> G[Merge Domain Features]
+        G --> H[🎉 Release v1.3]
+    end
     
-    branch feature/auth-improvements
-    checkout feature/auth-improvements
-    commit id: "🔐 Add Password Validation"
-    commit id: "🛡️ Implement 2FA Support"
-    commit id: "✅ Add Input Sanitization"
+    subgraph "🔐 Feature Branch: Auth Improvements"
+        B --> I[Add Password Validation]
+        I --> J[Implement 2FA Support]
+        J --> K[Add Input Sanitization]
+        K --> C
+    end
     
-    checkout main
-    merge feature/auth-improvements
-    commit id: "🎉 Release v1.1"
+    subgraph "💳 Feature Branch: Payment Integration"
+        D --> L[Add Stripe SDK]
+        L --> M[Payment Processing Logic]
+        M --> N[Invoice Generation]
+        N --> E
+    end
     
-    branch feature/payment-integration
-    checkout feature/payment-integration  
-    commit id: "💳 Add Stripe SDK"
-    commit id: "💰 Payment Processing Logic"
-    commit id: "🧾 Invoice Generation"
+    subgraph "🔍 Feature Branch: Domain Availability"
+        F --> O[WHOIS API Integration]
+        O --> P[Real-time Checking]
+        P --> G
+    end
     
-    checkout main
-    merge feature/payment-integration
-    commit id: "🎉 Release v1.2"
+    style A fill:#e8f5e8
+    style D fill:#fff3e0
+    style F fill:#fff3e0
+    style H fill:#fff3e0
+    style I fill:#ffebee
+    style J fill:#ffebee
+    style K fill:#ffebee
+    style L fill:#e3f2fd
+    style M fill:#e3f2fd
+    style N fill:#e3f2fd
+    style O fill:#f3e5f5
+    style P fill:#f3e5f5
+```
+
+#### � Branching Strategy
+
+```mermaid
+flowchart LR
+    A[🌟 main] --> B[🔀 feature/new-feature]
+    B --> C[💻 Development Work]
+    C --> D[🧪 Testing & Review]
+    D --> E{✅ Ready?}
+    E -->|Yes| F[🔄 Pull Request]
+    E -->|No| C
+    F --> G[👥 Code Review]
+    G --> H{✅ Approved?}
+    H -->|Yes| I[🎯 Merge to main]
+    H -->|No| C
+    I --> J[🚀 Deploy]
+    J --> K[🏷️ Tag Release]
     
-    branch feature/domain-availability
-    checkout feature/domain-availability
-    commit id: "🔍 WHOIS API Integration"
-    commit id: "⚡ Real-time Checking"
-    
-    checkout main
-    merge feature/domain-availability
-    commit id: "🎉 Release v1.3"
+    style A fill:#c8e6c9
+    style F fill:#fff3e0
+    style I fill:#e3f2fd
+    style J fill:#ffcdd2
+    style K fill:#f8bbd9
 ```
 
 ### 📋 Contributing Guidelines
