@@ -57,31 +57,40 @@
 
 ```mermaid
 graph TB
-    subgraph "Client Layer"
+    subgraph "🌐 Client Layer"
         A[Web Browser] --> B[HTML/CSS/JS]
         B --> C[Bootstrap UI]
     end
     
-    subgraph "Application Layer"
+    subgraph "⚡ Application Layer"
         D[Express.js Server] --> E[Route Handlers]
         E --> F[Authentication Middleware]
         E --> G[Session Management]
+        E --> H[Input Validation]
     end
     
-    subgraph "Business Logic Layer"
-        H[User Management] --> I[Domain Booking Logic]
-        I --> J[Admin Operations]
+    subgraph "🧠 Business Logic Layer"
+        I[User Management] --> J[Domain Booking Logic]
+        J --> K[Admin Operations]
     end
     
-    subgraph "Data Layer"
-        K[MySQL Database] --> L[Users Table]
-        K --> M[Bookings Table]
+    subgraph "🗄️ Data Layer"
+        L[(MySQL Database)] --> M[Users Table]
+        L --> N[Bookings Table]
     end
     
-    A -.->|HTTP Requests| D
-    D -.->|Database Queries| K
-    F --> H
-    G --> H
+    C -.->|HTTP Requests| D
+    F --> I
+    G --> I
+    H --> I
+    I --> L
+    J --> L
+    K --> L
+    
+    style A fill:#e1f5fe
+    style D fill:#fff3e0
+    style I fill:#f3e5f5
+    style L fill:#e8f5e8
 ```
 
 ### 🔄 Component Architecture
@@ -139,22 +148,23 @@ graph TB
 
 ```mermaid
 sequenceDiagram
-    participant U as User
-    participant B as Browser
-    participant S as Server
-    participant DB as Database
-    participant Auth as Auth Middleware
+    participant U as 👤 User
+    participant B as 🌐 Browser
+    participant S as ⚡ Server
+    participant DB as 🗄️ Database
+    participant Auth as 🔐 Auth Middleware
 
     U->>B: Access Application
     B->>S: GET /
     S->>B: Return Login Page
+    B->>U: Show Login Form
     
     U->>B: Enter Credentials
     B->>S: POST /auth/login
     S->>Auth: Validate Input
     Auth->>DB: Query User
     DB-->>Auth: Return User Data
-    Auth->>Auth: Compare Password (bcrypt)
+    Auth->>Auth: bcrypt Compare Password
     
     alt Valid Credentials
         Auth->>S: Create Session
@@ -171,74 +181,98 @@ sequenceDiagram
 
 ```mermaid
 flowchart TD
-    A[User Logs In] --> B{Authentication Valid?}
-    B -->|No| C[Redirect to Login]
-    B -->|Yes| D[Access User Dashboard]
+    A[🏠 START] --> B{❓ Authentication Valid?}
+    B -->|No| C[🚪 Redirect to Login]
+    B -->|Yes| D[📊 Access User Dashboard]
     
-    D --> E[Enter Domain Name]
-    E --> F[Click Book Domain]
-    F --> G[Frontend Validation]
+    D --> E[📝 Enter Domain Name]
+    E --> F[🖱️ Click Book Domain]
+    F --> G[✅ Frontend Validation]
     
-    G --> H{Valid Domain Format?}
-    H -->|No| I[Show Error Message]
-    H -->|Yes| J[Send POST Request]
+    G --> H{🔍 Valid Domain Format?}
+    H -->|No| I[❌ Show Error Message]
+    H -->|Yes| J[📤 Send POST Request]
     
-    J --> K[Server Receives Request]
-    K --> L[Check Session]
+    J --> K[⚡ Server Receives Request]
+    K --> L[🔐 Check Session]
     
-    L --> M{User Authenticated?}
-    M -->|No| N[Return 401 Error]
-    M -->|Yes| O[Insert into Database]
+    L --> M{🛡️ User Authenticated?}
+    M -->|No| N[🚫 Return 401 Error]
+    M -->|Yes| O[💾 Insert into Database]
     
-    O --> P[Set Status as 'Pending']
-    P --> Q[Return Success Response]
-    Q --> R[Update UI]
-    R --> S[Show in Bookings Table]
+    O --> P[⏳ Set Status as 'Pending']
+    P --> Q[✅ Return Success Response]
+    Q --> R[🔄 Update UI]
+    R --> S[📋 Show in Bookings Table]
     
     I --> E
     N --> C
+    C --> A
+    
+    style A fill:#e8f5e8
+    style C fill:#ffebee
+    style S fill:#e3f2fd
+    style I fill:#fff3e0
+    style N fill:#ffebee
 ```
 
-### 👨‍💼 Admin Approval Flow
+### 👨‍💼 Admin Approval Workflow
 
 ```mermaid
 stateDiagram-v2
-    [*] --> PendingBookings
-    PendingBookings --> ViewBooking: Admin clicks on booking
-    ViewBooking --> ApprovalDecision: Admin reviews
+    [*] --> PendingBookings: 📋 View Bookings List
     
-    ApprovalDecision --> Approved: Click Approve
-    ApprovalDecision --> Rejected: Click Reject
+    state PendingBookings {
+        [*] --> BookingsList
+        BookingsList : ID | User | Domain | Date | Actions
+        BookingsList : 1  | john | example.com | Today | [✅][❌]
+        BookingsList : 2  | alice| mysite.org | Yesterday | [✅][❌]
+    }
     
-    Approved --> UpdateDatabase: Status = 'approved'
-    Rejected --> UpdateDatabase: Status = 'rejected'
+    PendingBookings --> AdminAction: 👨‍💼 Admin Clicks Button
     
-    UpdateDatabase --> NotifyUser: Send response
-    NotifyUser --> RefreshDashboard: Update admin view
-    RefreshDashboard --> PendingBookings: Return to list
+    state AdminAction {
+        [*] --> Decision
+        Decision --> Approve: ✅ Click Approve
+        Decision --> Reject: ❌ Click Reject
+    }
     
-    Approved --> [*]
-    Rejected --> [*]
+    AdminAction --> UpdateDatabase
+    
+    state UpdateDatabase {
+        Approve --> ApprovedStatus: UPDATE status='approved'
+        Reject --> RejectedStatus: UPDATE status='rejected'
+    }
+    
+    UpdateDatabase --> NotifyUser: 📧 Send Response
+    NotifyUser --> RefreshDashboard: 🔄 Update Views
+    RefreshDashboard --> PendingBookings: 📊 Return to List
+    
+    UpdateDatabase --> [*]: ✅ Process Complete
 ```
 
 ## 🗄️ Database Schema
 
 ### 📊 Entity Relationship Diagram
 
-```
-┌─────────────────────────────────┐       ┌─────────────────────────────────┐
-│            USERS                │       │           BOOKINGS              │
-├─────────────────────────────────┤       ├─────────────────────────────────┤
-│ 🔑 id (INT, PK, AUTO_INCREMENT) │◄─────┐│ 🔑 id (INT, PK, AUTO_INCREMENT) │
-│ 📧 username (VARCHAR(50))       │      ││ 🔗 user_id (INT, FK)            │
-│ 🔐 password (VARCHAR(255))      │      ││ 🌐 domain_name (VARCHAR(255))   │
-│ 👤 role (ENUM: user/admin)      │      ││ 📅 booking_date (TIMESTAMP)     │
-└─────────────────────────────────┘      ││ ⭐ status (ENUM: pending/       │
-                                         ││    approved/rejected)           │
-                                         │└─────────────────────────────────┘
-                                         │
-                                    ONE-TO-MANY
-                                 (One User → Many Bookings)
+```mermaid
+erDiagram
+    USERS {
+        int id PK "🔑 Primary Key, Auto Increment"
+        varchar username UK "📧 Unique Username"
+        varchar password "🔐 bcrypt Hashed Password"
+        enum role "👤 user/admin"
+    }
+    
+    BOOKINGS {
+        int id PK "🔑 Primary Key, Auto Increment"
+        int user_id FK "� Foreign Key to Users"
+        varchar domain_name "🌐 Domain Name"
+        timestamp booking_date "📅 Booking Timestamp"
+        enum status "⭐ pending/approved/rejected"
+    }
+    
+    USERS ||--o{ BOOKINGS : "One User → Many Bookings"
 ```
 
 ### 🎯 Table Relationships & Constraints
@@ -442,21 +476,45 @@ NODE_ENV=production node server.js
 
 ### 🎯 API Architecture Overview
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                     REST API ENDPOINTS                          │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                 │
-│  🔐 /auth/*          📝 /booking/*         👨‍💼 /admin/*        │
-│  ┌─────────────┐    ┌─────────────────┐    ┌─────────────────┐   │
-│  │   POST      │    │      POST       │    │      GET        │   │
-│  │ /register   │    │     /book       │    │   /bookings     │   │
-│  │   POST      │    │      GET        │    │      PUT        │   │
-│  │  /login     │    │ /user-bookings  │    │ /approve/:id    │   │
-│  └─────────────┘    └─────────────────┘    │    DELETE       │   │
-│                                            │ /reject/:id     │   │
-│                                            └─────────────────┘   │
-└─────────────────────────────────────────────────────────────────┘
+```mermaid
+graph TB
+    subgraph "🔐 Authentication Routes (/auth)"
+        A1[POST /register]
+        A2[POST /login]
+    end
+    
+    subgraph "📝 Booking Routes (/booking)"
+        B1[POST /book]
+        B2[GET /user-bookings]
+    end
+    
+    subgraph "👨‍💼 Admin Routes (/admin)"
+        C1[GET /bookings]
+        C2[PUT /approve/:id]
+        C3[DELETE /reject/:id]
+    end
+    
+    subgraph "⚡ Express Server"
+        Server[Express.js Router]
+    end
+    
+    A1 --> Server
+    A2 --> Server
+    B1 --> Server
+    B2 --> Server
+    C1 --> Server
+    C2 --> Server
+    C3 --> Server
+    
+    Server --> Database[(🗄️ MySQL Database)]
+    
+    style A1 fill:#ffebee
+    style A2 fill:#ffebee
+    style B1 fill:#e8f5e8
+    style B2 fill:#e8f5e8
+    style C1 fill:#e3f2fd
+    style C2 fill:#e3f2fd
+    style C3 fill:#e3f2fd
 ```
 
 ### 🔐 Authentication Routes (`/auth`)
@@ -558,28 +616,40 @@ Response: {"success": true}
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-### 📊 System Monitoring
+### 📊 System Performance Monitoring
 
 ```mermaid
-graph LR
-    A[Client Request] --> B[Express Server]
-    B --> C{Load Balancer}
-    C --> D[App Instance 1]
-    C --> E[App Instance 2]
-    C --> F[App Instance N]
+graph TB
+    A[📱 Client Request] --> B[⚡ Express Server]
+    B --> C{🔄 Load Balancer}
     
-    D --> G[MySQL Database]
+    C --> D[🖥️ App Instance 1]
+    C --> E[🖥️ App Instance 2]
+    C --> F[🖥️ App Instance N]
+    
+    D --> G[(🗄️ MySQL Database)]
     E --> G
     F --> G
     
-    G --> H[Performance Metrics]
-    H --> I[Response Time: <300ms]
-    H --> J[Throughput: 100+ req/s]
-    H --> K[Error Rate: <1%]
+    G --> H[📊 Performance Metrics]
     
-    style I fill:#90EE90
-    style J fill:#90EE90  
-    style K fill:#90EE90
+    H --> I[⚡ Response Time: <300ms]
+    H --> J[📈 Throughput: 100+ req/s]
+    H --> K[🎯 Error Rate: <1%]
+    H --> L[💾 Memory: ~50MB]
+    H --> M[🔗 DB Pool: Optimized]
+    
+    style I fill:#c8e6c9,color:#2e7d32
+    style J fill:#c8e6c9,color:#2e7d32
+    style K fill:#c8e6c9,color:#2e7d32
+    style L fill:#c8e6c9,color:#2e7d32
+    style M fill:#c8e6c9,color:#2e7d32
+    
+    I -.->|✅ EXCELLENT| H
+    J -.->|✅ GOOD| H
+    K -.->|✅ HEALTHY| H
+    L -.->|✅ OPTIMAL| H
+    M -.->|✅ EFFICIENT| H
 ```
 
 ## 🔐 Security Architecture
@@ -613,51 +683,51 @@ graph LR
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-### 🔒 Authentication & Authorization Flow
+### 🔒 Security & Authentication Process
 
 ```mermaid
 sequenceDiagram
-    participant C as Client
-    participant S as Server
-    participant M as Middleware
-    participant DB as Database
-    participant H as bcrypt
+    participant C as 📱 Client
+    participant S as ⚡ Server
+    participant M as ⚙️ Middleware
+    participant DB as 🗄️ Database
+    participant H as 🔐 bcrypt
 
-    Note over C,H: Registration Process
+    Note over C,H: � Registration Process
     C->>S: POST /auth/register {username, password}
-    S->>M: Input Validation
+    S->>M: ✅ Input Validation
     M->>H: Hash Password (salt rounds: 10)
-    H-->>M: Hashed Password
-    M->>DB: INSERT user with hashed password
-    DB-->>S: Success/Error
-    S-->>C: Redirect to login
+    H-->>M: 🔐 Hashed Password
+    M->>DB: 💾 INSERT user with hashed password
+    DB-->>S: Success/Error Response
+    S-->>C: 🏠 Redirect to login
 
-    Note over C,H: Login Process  
+    Note over C,H: 🚪 Login Process  
     C->>S: POST /auth/login {username, password}
-    S->>DB: SELECT user WHERE username
-    DB-->>S: User data with hashed password
-    S->>H: Compare(plaintext, hash)
-    H-->>S: Match result
+    S->>DB: 🔍 SELECT user WHERE username
+    DB-->>S: 👤 User data with hashed password
+    S->>H: 🔍 Compare(plaintext, hash)
+    H-->>S: ✅/❌ Match result
     
     alt Password Matches
-        S->>S: Create Session
-        S-->>C: Set-Cookie: sessionId
-        Note over C,S: User now authenticated
+        S->>S: 🛡️ Create Session
+        S-->>C: 🍪 Set-Cookie: sessionId
+        Note over C,S: ✅ User now authenticated
     else Password Invalid
-        S-->>C: 401 Unauthorized
+        S-->>C: 🚫 401 Unauthorized
     end
 
-    Note over C,H: Protected Route Access
+    Note over C,H: 🛡️ Protected Route Access
     C->>S: GET /booking/user-bookings
-    S->>M: Check session middleware
-    M->>M: Validate session
+    S->>M: 🔍 Check session middleware
+    M->>M: ✅ Validate session
     
     alt Valid Session
-        M->>DB: Query user bookings
-        DB-->>S: Booking data
-        S-->>C: JSON response
+        M->>DB: � Query user bookings
+        DB-->>S: � Booking data
+        S-->>C: 📤 JSON response
     else Invalid Session
-        M-->>C: 401 Unauthorized
+        M-->>C: 🚫 401 Unauthorized
     end
 ```
 
@@ -721,27 +791,27 @@ sequenceDiagram
 
 ## 🔮 Future Enhancements
 
-### 🎯 Roadmap Overview
+### 🎯 Development Roadmap
 
 ```mermaid
 gantt
-    title Development Roadmap
+    title 🚀 Domain Booking App Development Timeline
     dateFormat  YYYY-MM-DD
-    section Phase 1
+    section 📅 Phase 1 - Oct 2025
     Email Notifications     :done, email, 2025-10-01, 2025-10-15
-    Payment Integration     :active, payment, 2025-10-16, 2025-11-15
+    Payment Integration     :active, payment, 2025-10-16, 2025-10-31
     
-    section Phase 2  
-    Domain Availability     :domain, 2025-11-16, 2025-12-15
-    Multi-year Bookings     :multi, 2025-12-16, 2026-01-15
+    section 📅 Phase 2 - Nov-Dec 2025
+    Domain Availability Check :domain, 2025-11-01, 2025-11-30
+    Multi-year Bookings     :multi, 2025-12-01, 2025-12-31
     
-    section Phase 3
-    Advanced Analytics      :analytics, 2026-01-16, 2026-02-15
-    API Rate Limiting       :rate, 2026-02-16, 2026-03-15
+    section 📅 Phase 3 - Jan-Mar 2026
+    Advanced Analytics      :analytics, 2026-01-01, 2026-02-28
+    API Rate Limiting       :rate, 2026-03-01, 2026-03-31
     
-    section Phase 4
-    Docker Support          :docker, 2026-03-16, 2026-04-15
-    Unit Testing            :testing, 2026-04-16, 2026-05-15
+    section 📅 Phase 4 - Apr-May 2026
+    Docker Support          :docker, 2026-04-01, 2026-04-30
+    Unit Testing Coverage   :testing, 2026-05-01, 2026-05-31
 ```
 
 ### 📋 Feature Priority Matrix
@@ -798,33 +868,39 @@ gantt
 - [ ] **🐳 Docker Support** - Containerized deployment and scaling
 - [ ] **🧪 Unit Testing** - Comprehensive test coverage with Jest/Mocha
 
-### 🏗️ Scalability Architecture
+### 🏗️ Future Scalability Architecture
 
 ```mermaid
 graph TB
-    subgraph "Load Balancer Layer"
+    subgraph "🌐 Load Balancer Layer"
         LB[NGINX Load Balancer]
     end
     
-    subgraph "Application Layer"
+    subgraph "⚡ Application Layer"
         A1[Node.js App 1]
         A2[Node.js App 2] 
         A3[Node.js App N]
     end
     
-    subgraph "Cache Layer"
+    subgraph "💾 Cache Layer"
         R[Redis Cache]
-        M[Memcached]
+        MC[Memcached]
     end
     
-    subgraph "Database Layer"
-        DB1[(MySQL Primary)]
-        DB2[(MySQL Replica)]
-        DB3[(MySQL Replica)]
+    subgraph "🗄️ Database Layer"
+        DB1[(MySQL Primary<br/>Read/Write)]
+        DB2[(MySQL Replica 1<br/>Read Only)]
+        DB3[(MySQL Replica 2<br/>Read Only)]
     end
     
-    subgraph "File Storage"
-        S3[AWS S3/MinIO]
+    subgraph "📁 File Storage"
+        S3[AWS S3 / MinIO<br/>Static Assets]
+    end
+    
+    subgraph "� Monitoring"
+        M1[Prometheus]
+        M2[Grafana]
+        M3[ELK Stack]
     end
     
     LB --> A1
@@ -834,6 +910,10 @@ graph TB
     A1 --> R
     A2 --> R
     A3 --> R
+    
+    A1 --> MC
+    A2 --> MC
+    A3 --> MC
     
     A1 --> DB1
     A2 --> DB1
@@ -845,30 +925,63 @@ graph TB
     A1 --> S3
     A2 --> S3
     A3 --> S3
+    
+    A1 -.-> M1
+    A2 -.-> M1
+    A3 -.-> M1
+    
+    M1 --> M2
+    M1 --> M3
+    
+    style LB fill:#ffcdd2
+    style A1 fill:#c8e6c9
+    style A2 fill:#c8e6c9
+    style A3 fill:#c8e6c9
+    style R fill:#fff3e0
+    style MC fill:#fff3e0
+    style DB1 fill:#e1f5fe
+    style DB2 fill:#e1f5fe
+    style DB3 fill:#e1f5fe
+    style S3 fill:#f3e5f5
 ```
 
 ## 🤝 Contributing
 
-### 🔄 Development Workflow
+### 🔄 Git Development Workflow
 
 ```mermaid
 gitgraph
-    commit id: "main"
+    commit id: "🚀 Initial Commit"
+    commit id: "📝 Basic Auth System"
+    
     branch feature/auth-improvements
     checkout feature/auth-improvements
-    commit id: "Add password validation"
-    commit id: "Implement 2FA"
+    commit id: "🔐 Add Password Validation"
+    commit id: "🛡️ Implement 2FA Support"
+    commit id: "✅ Add Input Sanitization"
+    
     checkout main
     merge feature/auth-improvements
-    commit id: "Release v1.1"
+    commit id: "🎉 Release v1.1"
     
     branch feature/payment-integration
     checkout feature/payment-integration  
-    commit id: "Add Stripe SDK"
-    commit id: "Payment processing"
+    commit id: "💳 Add Stripe SDK"
+    commit id: "💰 Payment Processing Logic"
+    commit id: "🧾 Invoice Generation"
+    
     checkout main
     merge feature/payment-integration
-    commit id: "Release v1.2"
+    commit id: "🎉 Release v1.2"
+    
+    branch feature/domain-availability
+    checkout feature/domain-availability
+    commit id: "🔍 WHOIS API Integration"
+    commit id: "⚡ Real-time Checking"
+    
+    checkout main
+    merge feature/domain-availability
+    commit id: "🎉 Release v1.3"
 ```
 
 ### 📋 Contributing Guidelines
